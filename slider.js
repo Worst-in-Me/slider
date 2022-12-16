@@ -1,43 +1,76 @@
-const wrapper = document.querySelector('.wrapper');
-const content = document.querySelector('.content');
+const el = (tagName = 'div', elem = '', attrs = {}, listeners = {}) => {
+    const element = document.createElement(tagName);
 
-let position = 0;
+    if (typeof attrs === 'string') element.className = attrs;
+    else
+        for (const [key, value] of Object.entries(attrs))
+            element.setAttribute(key, value);
 
-const createButton = (name, content) => {
-    const button = document.createElement('div');
+    for (const [key, value] of Object.entries(listeners))
+        element.addEventListener(key, value);
 
-    button.classList.add('button', name);
-    button.textContent = content;
-
-    return button;
+    element.append(...[].concat(elem));
+    return element;
 };
 
-const nextSlide = () => () => {
-    position--;
+const elDiv = el.bind(null, 'div');
 
-    if (position < -1) position = 1;
-    content.style.transform = `translate(${position * 100}%)`;
+const elButton = (name = '', content, listeners) =>
+    elDiv(content, 'button ' + name, listeners);
+
+const createSlider = (elems) => {
+    const content = elDiv(elems, 'slider__content');
+    let position = 0;
+
+    const go =
+        (diff = 1) =>
+        () => {
+            position += diff;
+            if (position >= elems.length) position = 0;
+            if (position < 0) position = elems.length - 1;
+
+            content.style = `--translate: ${-position * 100}%`;
+        };
+
+    const nextSlide = go(1);
+    const prevSlide = go(-1);
+
+    return elDiv(
+        [
+            elDiv(content, 'slider__container'),
+            elDiv(
+                [
+                    elButton('button_type_prev', '< prev', {
+                        click: prevSlide,
+                    }),
+                    elButton('button_type_next', 'next >', {
+                        click: nextSlide,
+                    }),
+                ],
+                'slider__buttons'
+            ),
+        ],
+        'slider'
+    );
 };
 
-const prevSlide = () => () => {
-    position++;
-
-    if (position > 1) position = -1;
-    content.style.transform = `translate(${position * 100}%)`;
-};
-
-const createSlider = (elem) => {
-    const prevButton = createButton('prevButton', '< prev');
-    const nextButton = createButton('nextButton', 'next >');
-    const buttons = document.createElement('div');
-    buttons.classList.add('buttons');
-
-    prevButton.addEventListener('click', prevSlide());
-    nextButton.addEventListener('click', nextSlide());
-
-    buttons.append(prevButton, nextButton);
-
-    elem.append(buttons);
-};
-
-createSlider(wrapper);
+document.body.append(
+    createSlider(
+        [
+            './images/aI9N_qQbLoU.jpg',
+            './images/q_x0pT3XFSg.jpg',
+            './images/aI9N_qQbLoU.jpg',
+            './images/q_x0pT3XFSg.jpg',
+            './images/aI9N_qQbLoU.jpg',
+            './images/q_x0pT3XFSg.jpg',
+            './images/vtTLCsOcRrQ.jpg',
+            './images/q_x0pT3XFSg.jpg',
+            './images/vtTLCsOcRrQ.jpg',
+        ].map((src) => el('img', '', { src, class: 'img' }))
+    ),
+    createSlider(
+        ['./images/aI9N_qQbLoU.jpg', './images/vtTLCsOcRrQ.jpg'].map((src) =>
+            el('img', '', { src, class: 'img' })
+        )
+    )
+);
