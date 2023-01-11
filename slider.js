@@ -9,17 +9,33 @@ const contents = [
     './images/raX80tq_cEc.jpg',
 ];
 
-const createButton = (tagName, className, content) => {
-    const button = document.createElement(tagName);
-    button.classList.add(className);
-    button.textContent = content;
+const createElem = (tagName, className, attrs = {}, content) => {
+    const elem = document.createElement(tagName);
+    elem.classList.add(className);
+    elem.textContent = content;
 
-    return button;
+    if (attrs) {
+        for (const [name, value] of Object.entries(attrs)) {
+            elem.setAttribute(name, value);
+        }
+    }
+
+    return elem;
 };
 
 const createSlider = (children) => {
     let slide = 0;
     let x = null;
+
+    const nextSlide = () => {
+        slide++;
+        moveSlide();
+    };
+
+    const prevSlide = () => {
+        slide--;
+        moveSlide();
+    };
 
     const onPointerDown = (e) => {
         x = e.clientX;
@@ -31,28 +47,16 @@ const createSlider = (children) => {
         const diff = Math.abs(x - e.clientX);
         if (diff < 50) return (x = null);
 
-        if (x > e.clientX) {
-            slide++;
-            moveSlide();
-        } else {
-            slide--;
-            moveSlide();
-        }
+        if (x > e.clientX) nextSlide();
+        else prevSlide();
 
         x = null;
     };
 
     const moveSlideOnKey = () => {
         document.addEventListener('keydown', (e) => {
-            const key = e.code;
-
-            if (key === 'ArrowLeft') {
-                slide--;
-                moveSlide();
-            } else if (key === 'ArrowRight') {
-                slide++;
-                moveSlide();
-            }
+            if (e.code === 'ArrowLeft') prevSlide();
+            else if (e.code === 'ArrowRight') nextSlide();
         });
     };
 
@@ -79,38 +83,30 @@ const createSlider = (children) => {
     };
 
     const drawSlider = () => {
-        const slider = document.createElement('div');
-        slider.classList.add('slider');
-
-        const slider__container = document.createElement('div');
-        slider__container.classList.add('slider__container');
-
-        const sliderContent = document.createElement('div');
-        sliderContent.classList.add('slider__content');
-        slider__container.appendChild(sliderContent);
+        const slider = createElem('div', 'slider');
+        const sliderContainer = createElem('div', 'slider__container');
+        const sliderContent = createElem('div', 'slider__content');
+        sliderContainer.appendChild(sliderContent);
 
         children.map((elem) => {
-            const img = document.createElement('img');
-            img.src = elem;
-            img.classList.add('slider__content-img');
+            const img = createElem('img', 'slider__content-img', { src: elem });
             sliderContent.appendChild(img);
         });
 
-        slider__container.addEventListener('pointerdown', onPointerDown);
+        sliderContainer.addEventListener('pointerdown', onPointerDown);
         document.body.addEventListener('pointerup', onPointerUp);
 
-        slider.appendChild(slider__container);
+        slider.appendChild(sliderContainer);
 
-        const nextButton = createButton('div', 'slider__button', '->');
-        const prevButton = createButton('div', 'slider__button', '<-');
+        const nextButton = createElem('div', 'slider__button', null, '->');
+        const prevButton = createElem('div', 'slider__button', null, '<-');
 
-        const buttons = document.createElement('div');
-        buttons.classList.add('slider__buttons');
+        const buttons = createElem('div', 'slider__buttons');
 
         buttons.appendChild(prevButton);
 
         children.map((_, index) => {
-            const navButton = createButton('div', `navigation__button`);
+            const navButton = createElem('div', `navigation__button`);
             buttons.appendChild(navButton);
 
             navButton.addEventListener('click', (event) => {
@@ -122,15 +118,8 @@ const createSlider = (children) => {
 
         buttons.appendChild(nextButton);
 
-        nextButton.addEventListener('click', () => {
-            slide++;
-            moveSlide();
-        });
-
-        prevButton.addEventListener('click', () => {
-            slide--;
-            moveSlide();
-        });
+        nextButton.addEventListener('click', nextSlide);
+        prevButton.addEventListener('click', prevSlide);
 
         moveSlideOnKey();
 
